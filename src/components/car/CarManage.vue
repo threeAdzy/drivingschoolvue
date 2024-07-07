@@ -20,7 +20,7 @@
           v-model="state"
           style="margin-left: 25px; width: 10%"
           clearable
-          placeholder="选择状态"
+          placeholder="选择车辆状态"
         >
           <el-option
             v-for="item in status"
