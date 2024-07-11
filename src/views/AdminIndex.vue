@@ -33,6 +33,7 @@
 </template>
 
 <script>
+let clientId = Math.random().toString(36);
 import Aside from "./AdminAside.vue";
 import Header from "./AdminHeader.vue";
 export default {
@@ -40,6 +41,8 @@ export default {
   components: { Aside, Header },
   data() {
     return {
+      path: "ws://localhost:8080/ws/",
+      ws: {},
       isCollapse: false,
       aside_witdh: "200px",
       icon: "el-icon-d-arrow-left",
@@ -47,10 +50,51 @@ export default {
   },
   created() {
     this.$router.push("/AdminSelf");
+    this.init();
   },
   mounted() {},
 
   methods: {
+    init() {
+      // 实例化socket，这里的实例化直接赋值给this.ws是为了后面可以在其它的函数中也能调用websocket方法，例如：this.ws.close(); 完成通信后关闭WebSocket连接
+      this.ws = new WebSocket("ws://localhost:8080/ws/" + clientId);
+
+      //监听是否连接成功
+      this.ws.onopen = () => {
+        console.log("ws连接状态：" + this.ws.readyState);
+        //连接成功则发送一个数据
+        this.ws.send("连接成功");
+      };
+
+      //接听服务器发回的信息并处理展示
+      this.ws.onmessage = (data) => {
+        console.log("接收到来自服务器的消息：");
+        console.log(data.data);
+        let jsonObject = JSON.parse(data.data);
+        let message = `
+          申请类型: ${jsonObject.type}<br>
+          申请人: ${jsonObject.person}<br>
+          申请内容: ${jsonObject.content}
+          `;
+        this.$notify.info({
+          title: "新的申请",
+          dangerouslyUseHTMLString: true,
+          message: message,
+        });
+      };
+
+      //监听连接关闭事件
+      this.ws.onclose = () => {
+        //监听整个过程中websocket的状态
+        console.log("ws连接状态：" + this.ws.readyState);
+      };
+
+      //监听并处理error事件
+      this.ws.onerror = function (error) {
+        console.log(error);
+      };
+    },
+
     doCollapse() {
       console.log(1111);
 
